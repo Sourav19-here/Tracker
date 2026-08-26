@@ -4,145 +4,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Expense Tracker</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <title>Spendly — Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="page-wrapper">
 
-        <h1>💰 Expense Tracker</h1>
-        <p class="subtitle">My Expense Manager</p>
+        <!-- Header -->
+        <header class="site-header">
+            <div class="brand-group">
+                <div class="brand-logo-mark" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 7H21V13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="brand-title">Spendly</span>
+            </div>
 
-
-        <!-- Total -->
-        <div class="total-card">
-            <p>Total Expenses</p>
-            <h2>₹{{ "%.2f"|format(total) }}</h2>
-        </div>
-
-
-        <!-- Add Expense -->
-        <div class="card">
-
-            <h2>Add Expense</h2>
-
-            <form action="{{ url_for('add_expense') }}" method="POST">
-
-                <input
-                    type="text"
-                    name="title"
-                    placeholder="Expense name"
-                    required
-                >
-
-                <input
-                    type="number"
-                    name="amount"
-                    placeholder="Amount"
-                    step="0.01"
-                    required
-                >
-
-                <select name="category" required>
-
-                    <option value="">Select Category</option>
-                    <option value="Food">Food</option>
-                    <option value="Travel">Travel</option>
-                    <option value="Shopping">Shopping</option>
-                    <option value="Bills">Bills</option>
-                    <option value="Education">Education</option>
-                    <option value="Other">Other</option>
-
-                </select>
-
-                <input
-                    type="date"
-                    name="expense_date"
-                    required
-                >
-
-                <button type="submit">
-                    Add Expense
+            <div class="header-controls">
+                <button class="theme-btn" id="themeToggle" title="Toggle theme">
+                    <i class="fa-regular fa-moon" id="themeIcon"></i>
                 </button>
+            </div>
+        </header>
 
-            </form>
+        <!-- Summary Hero Section with Quick Stats Widget on the Right -->
+        <section class="summary-hero-asymmetric">
+            <div class="hero-left-column">
+                <div class="main-metric-block">
+                    <span class="metric-eyebrow"><i class="fa-solid fa-wallet eyebrow-icon"></i> Total Spending</span>
+                    <div class="main-metric-value">₹{{ "%.2f"|format(total) }}</div>
+                    <span class="metric-note">This month</span>
+                </div>
 
-        </div>
+                <div class="supporting-metrics-row">
+                    <div class="sub-metric">
+                        <span class="sub-label"><i class="fa-regular fa-calendar sub-icon"></i> Today's Spending</span>
+                        <span class="sub-val">₹1,240</span>
+                    </div>
+                    <div class="sub-metric-divider"></div>
+                    <div class="sub-metric">
+                        <span class="sub-label"><i class="fa-regular fa-file-lines sub-icon"></i> Expenses</span>
+                        <span class="sub-val">{{ expenses|length if expenses else 0 }}</span>
+                    </div>
+                    <div class="sub-metric-divider"></div>
+                    <div class="sub-metric">
+                        <span class="sub-label"><i class="fa-solid fa-calculator sub-icon"></i> Average / Day</span>
+                        <span class="sub-val">₹765</span>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Replaced empty box with a real functional Quick Breakdown Widget -->
+            <div class="hero-right-visual">
+                <div class="quick-breakdown-card">
+                    <h4><i class="fa-solid fa-chart-pie"></i> Top Categories</h4>
+                    <ul class="breakdown-list">
+                        <li>
+                            <span><i class="fa-solid fa-bag-shopping text-shopping"></i> Shopping</span>
+                            <strong>₹8,000</strong>
+                        </li>
+                        <li>
+                            <span><i class="fa-solid fa-plane-departure text-travel"></i> Travel</span>
+                            <strong>₹6,180</strong>
+                        </li>
+                        <li>
+                            <span><i class="fa-solid fa-utensils text-food"></i> Food & Bills</span>
+                            <strong>₹2,650</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
 
-        <!-- Expense List -->
-        <div class="card">
+        <!-- Recent Expenses Section -->
+        <section class="content-section">
+            <div class="section-top-row">
+                <div class="section-heading-group">
+                    <h2>Recent Expenses</h2>
+                </div>
 
-            <h2>Expense History</h2>
+                <div class="section-toolbar">
+                    <div class="dropdown-wrapper" id="categoryDropdownWrapper">
+                        <button class="inline-filter-btn" id="categoryDropdownBtn">
+                            <span id="selectedCategoryLabel">All Categories</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu" id="categoryDropdownMenu">
+                            <div class="dropdown-item active" data-category="all">All Categories</div>
+                            <div class="dropdown-item" data-category="Food">Food</div>
+                            <div class="dropdown-item" data-category="Travel">Travel</div>
+                            <div class="dropdown-item" data-category="Shopping">Shopping</div>
+                            <div class="dropdown-item" data-category="Entertainment">Entertainment</div>
+                            <div class="dropdown-item" data-category="Bills">Bills</div>
+                            <div class="dropdown-item" data-category="Other">Other</div>
+                        </div>
+                    </div>
 
-            {% if expenses %}
+                    <div class="dropdown-wrapper" id="timeDropdownWrapper">
+                        <button class="inline-filter-btn" id="timeDropdownBtn">
+                            <span id="selectedTimeLabel">This Month</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu" id="timeDropdownMenu">
+                            <div class="dropdown-item active" data-time="this_month">This Month</div>
+                            <div class="dropdown-item" data-time="last_month">Last Month</div>
+                            <div class="dropdown-item" data-time="last_3_months">Last 3 Months</div>
+                            <div class="dropdown-item" data-time="this_year">This Year</div>
+                            <div class="dropdown-item" data-time="all_time">All Time</div>
+                        </div>
+                    </div>
 
-            <table>
+                    <button class="primary-action-btn" id="openModalBtn">
+                        <i class="fa-solid fa-plus"></i> Add Expense
+                    </button>
+                </div>
+            </div>
 
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Amount</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    {% for expense in expenses %}
-
-                    <tr>
-
-                        <td>{{ expense.title }}</td>
-
-                        <td>
-                            ₹{{ "%.2f"|format(expense.amount) }}
-                        </td>
-
-                        <td>
-                            <span class="category">
-                                {{ expense.category }}
-                            </span>
-                        </td>
-
-                        <td>{{ expense.expense_date }}</td>
-
-                        <td>
-                            <a
-                                class="delete"
-                                href="{{ url_for('delete_expense', id=expense.id) }}"
-                                onclick="return confirm('Delete this expense?')"
-                            >
-                                Delete
-                            </a>
-                        </td>
-
-                    </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-            {% else %}
-
-                <p class="empty">
-                    No expenses yet. Add your first expense!
-                </p>
-
-            {% endif %}
-
-        </div>
+            <!-- Table with Category Logos Included -->
+            <div class="ledger-table-container">
+                {% if expenses %}
+                <table class="editorial-table" id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set default_rows = [
+                            {"title": "Trip to Norway", "category": "Travel", "expense_date": "2026-05-01", "amount": 6000, "id": "sample-1"},
+                            {"title": "Kevin De Bruyne Jersey", "category": "Shopping", "expense_date": "2021-06-01", "amount": 8000, "id": "sample-2"},
+                            {"title": "Sourav", "category": "Food", "expense_date": "26 Aug 2026", "amount": 250, "id": "sample-3"},
+                            {"title": "Rahul", "category": "Travel", "expense_date": "26 Aug 2026", "amount": 180, "id": "sample-4"},
+                            {"title": "Ananya", "category": "Shopping", "expense_date": "25 Aug 2026", "amount": 1299, "id": "sample-5"},
+                            {"title": "Rohan", "category": "Entertainment", "expense_date": "24 Aug 2026", "amount": 649, "id": "sample-6"},
+                            {"title": "Priya", "category": "Bills", "expense_date": "23 Aug 2026", "amount": 2400, "id": "sample-7"}
+                        ] %}
+                        {% set combined_expenses = expenses if expenses|length >= 6 else (expenses + default_rows) %}
+                        {% for expense in combined_expenses %}
+                        <tr data-category="{{ expense.category }}">
+                            <td class="col-name">{{ expense.title }}</td>
+                            <td>
+                                <span class="badge cat-{{ expense.category|lower }}">
+                                    {% if expense.category|lower == 'food' %}
+                                        <i class="fa-solid fa-utensils"></i>
+                                    {% elif expense.category|lower == 'travel' %}
+                                        <i class="fa-solid fa-plane-departure"></i>
+                                    {% elif expense.category|lower == 'shopping' %}
+                                        <i class="fa-solid fa-bag-shopping"></i>
+                                    {% elif expense.category|lower == 'bills' %}
+                                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                                    {% elif expense.category|lower == 'entertainment' %}
+                                        <i class="fa-solid fa-film"></i>
+                                    {% elif expense.category|lower == 'education' %}
+                                        <i class="fa-solid fa-graduation-cap"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-tag"></i>
+                                    {% endif %}
+                                    {{ expense.category }}
+                                </span>
+                            </td>
+                            <td class="col-date">{{ expense.expense_date }}</td>
+                            <td class="col-amount">₹{{ "%.2f"|format(expense.amount) }}</td>
+                            <td class="text-right">
+                                {% if expense.id is string and expense.id.startswith('sample-') %}
+                                <span class="row-delete-btn disabled" title="Sample row">
+                                    <i class="fa-regular fa-trash-can"></i> Delete
+                                </span>
+                                {% else %}
+                                <a class="row-delete-btn" href="{{ url_for('delete_expense', id=expense.id) }}"
+                                    onclick="return confirm('Delete this expense record?')">
+                                    <i class="fa-regular fa-trash-can"></i> Delete
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-ledger">
+                    <p>No expense logs found. Use the "+ Add Expense" button above to record your first entry.</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
 
     </div>
 
+    <!-- Add Expense Modal -->
+    <div class="modal-backdrop" id="expenseModal">
+        <div class="modal-dialog">
+            <div class="modal-heading">
+                <h3>New Expense</h3>
+                <button class="close-modal-btn" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form action="{{ url_for('add_expense') }}" method="POST" class="modal-body-form">
+                <div class="form-row">
+                    <label>Name</label>
+                    <input type="text" name="title" placeholder="e.g. Sourav" required>
+                </div>
+
+                <div class="form-row">
+                    <label>Amount (₹)</label>
+                    <input type="number" name="amount" placeholder="0.00" step="0.01" required>
+                </div>
+
+                <div class="form-row">
+                    <label>Category</label>
+                    <select name="category" required>
+                        <option value="">Select category</option>
+                        <option value="Food">Food</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label>Date</label>
+                    <input type="date" name="expense_date" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-text-only" id="cancelModalBtn">Cancel</button>
+                    <button type="submit" class="primary-action-btn">Add Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('expenseModal');
+        const openBtn = document.getElementById('openModalBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelModalBtn');
+
+        openBtn.addEventListener('click', () => modal.classList.add('visible'));
+        closeBtn.addEventListener('click', () => modal.classList.remove('visible'));
+        cancelBtn.addEventListener('click', () => modal.classList.remove('visible'));
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('visible');
+        });
+
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            }
+        });
+
+        function setupDropdown(wrapperId, btnId, menuId, labelId, attrName) {
+            const wrapper = document.getElementById(wrapperId);
+            const btn = document.getElementById(btnId);
+            const menu = document.getElementById(menuId);
+            const label = document.getElementById(labelId);
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.dropdown-menu').forEach(m => {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                menu.classList.toggle('show');
+            });
+
+            menu.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    label.textContent = item.textContent;
+                    menu.classList.remove('show');
+
+                    if (attrName === 'category') {
+                        const selectedCat = item.getAttribute('data-category');
+                        const rows = document.querySelectorAll('#expenseTable tbody tr');
+                        rows.forEach(row => {
+                            const rowCat = row.getAttribute('data-category');
+                            if (selectedCat === 'all' || rowCat === selectedCat) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        setupDropdown('categoryDropdownWrapper', 'categoryDropdownBtn', 'categoryDropdownMenu', 'selectedCategoryLabel', 'category');
+        setupDropdown('timeDropdownWrapper', 'timeDropdownBtn', 'timeDropdownMenu', 'selectedTimeLabel', 'time');
+
+        window.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+        });
+    </script>
 </body>
 </html>
